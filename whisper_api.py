@@ -2,9 +2,20 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse
 import whisper
 import shutil
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 app = FastAPI()
 model = whisper.load_model("small")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/transcribe")
 async def transcribe_stream(file: UploadFile = File(...)):
