@@ -4,8 +4,6 @@ import whisper
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
 
-
-
 app = FastAPI()
 model = whisper.load_model("small")
 
