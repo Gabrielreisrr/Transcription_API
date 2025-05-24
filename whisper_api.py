@@ -1,8 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 import whisper
 import shutil
-from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI()
 model = whisper.load_model("small")
@@ -21,9 +21,19 @@ async def transcribe_stream(file: UploadFile = File(...)):
     with open(temp_file, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    def generate_chunks():
-        result = model.transcribe(temp_file, language="pt", verbose=False, word_timestamps=True)
-        for segment in result["segments"]:
-            yield segment["text"] + " "
+    result = model.transcribe(temp_file, language="pt", verbose=False)
+    segments = []
 
-    return StreamingResponse(generate_chunks(), media_type="text/plain")
+    for seg in result["segments"]:
+        segments.append({
+            "time": f"{seg['start']:.2f} - {seg['end']:.2f}",
+            "text": seg["text"].strip()
+        })
+
+    os.remove(temp_file)
+    print(f"Processed file: {file.filename}")
+    print(f"Transcription result: {result['text'].strip()}")
+    print(f"Number of segments: {len(segments)}")
+    print(f"Segments: {segments}")
+    print("Transcription completed successfully.")
+    return { "segments": segments }
