@@ -1,23 +1,20 @@
-# Use uma imagem Python slim para reduzir o tamanho
-FROM python:3.10-slim
+FROM python:3.12-slim AS base
 
-# Instale dependências do sistema necessárias para whisper e ffmpeg
 RUN apt-get update && \
-    apt-get install -y ffmpeg git && \
+    apt-get install -y --no-install-recommends ffmpeg libsndfile1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Crie o diretório de trabalho
 WORKDIR /app
 
-# Copie os arquivos de requirements e instale as dependências Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copie o código da API para o container
-COPY whisper_api.py .
+COPY . .
 
-# Exponha a porta padrão do FastAPI/Uvicorn
+RUN useradd -m appuser
+USER appuser
+
 EXPOSE 8000
+HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1
 
-# Comando para rodar a API
-CMD ["uvicorn", "whisper_api:app", "--host", "0.0.0.0", "--port", "8000"] 
+CMD ["uvicorn", "whisper_api:app", "--host", "0.0.0.0", "--port", "8000"]
