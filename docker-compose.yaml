@@ -1,7 +1,15 @@
 version: "3.9"
-
 services:
   whisper-api:
-    build: .
+    image: whisper-api
     ports:
       - "8000:8000"
+    deploy:
+      replicas: 2                    
+      restart_policy:
+        condition: on-failure
+    networks:
+      - whisper-net
+networks:
+  whisper-net:
+    driver: overlay
